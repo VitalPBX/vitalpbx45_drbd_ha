@@ -162,6 +162,33 @@ nano /etc/hosts
 ```
 ---
 
+### Create the partition on both servers
+
+**Node 1 and Node 2**
+```
+fdisk /dev/sda
+```
+
+```
+Command (m for help): **n**
+Partition type:
+  p   primary (3 primary, 0 extended, 1 free)
+  e   extended
+Select (default e): **p**
+Selected partition 3 (take note of the assigned partition number as we will need it later)
+First sector (35155968-266338303, default 35155968): **[Enter]**
+Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): **[Enter]**
+Using default value 266338303
+Partition 4 of type Linux and of size 110.2 GiB is set
+Command (m for help): **t**
+Partition number (1-4, default 4): **3**
+Hex code (type L to list all codes): **8e**
+Changed type of partition 'Linux' to 'Linux LVM'
+Command (m for help): **w**
+
+```
+
+
 ## Install VitalPBX 4.5
 Install VitalPBX 4.5 on **Node 1 and Node 2**. Let's connect via SSH to each of them and run the following commands.
 ```
