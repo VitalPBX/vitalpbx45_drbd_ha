@@ -10,19 +10,27 @@ This guide explains how to configure a **High Availability (HA)** cluster for **
 * Public key SSH access between both nodes
 * Time synchronization (e.g., with `chrony`)
 
+## Install Debian 12 Minimal
+We are going to start by installing Debian 12 minimal on two servers
+
+a.- When you get to the partitions part you must select “Guide - use entire disk”:
+![image](https://github.com/user-attachments/assets/915b2adb-0699-4f40-9270-615d6ec3279b)
+
+
+
 ## 🌐 Network Configuration
 
 Each server must have:
 
 * A dedicated IP for DRBD replication (via a secondary interface or VLAN)
 * A static IP on the main interface for cluster management
-* A virtual floating IP (e.g. `192.168.1.250`) for VitalPBX services
+* A virtual floating IP (e.g. `192.168.10.30`) for VitalPBX services
 
 | Node    | Hostname              | IP Address    |
 | ------- | --------------------- | ------------- |
-| Node 1  | vitalpbx-master.local | 192.168.1.10  |
-| Node 2  | vitalpbx-slave.local  | 192.168.1.11  |
-| Virtual | HA Cluster            | 192.168.1.250 |
+| Node 1  | vitalpbx-master.local | 192.168.10.31  |
+| Node 2  | vitalpbx-slave.local  | 192.168.10.32  |
+| Virtual | HA Cluster            | 192.168.10.30 |
 
 ---
 
@@ -38,8 +46,8 @@ hostnamectl set-hostname vitalpbx-slave.local   # On Node 2
 Edit `/etc/hosts` on both nodes:
 
 ```
-192.168.1.10 vitalpbx-master.local
-192.168.1.11 vitalpbx-slave.local
+192.168.10.31 vitalpbx-master.local
+192.168.10.32 vitalpbx-slave.local
 ```
 
 ---
