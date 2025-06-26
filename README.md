@@ -199,9 +199,7 @@ and check to make sure that only the key(s) you wanted were added.
 root@vitalpbx-slave:~#
 </pre>
 
-### Create the partition on both servers
-
-**Node 1 and Node 2**
+### Create partition in **Node 1 and Node 2**
 ```
 fdisk /dev/sda
 ```
@@ -323,15 +321,421 @@ On **both servers**, perform the following steps:
 3. Create a **Firewall Rule** allowing this service.
 ![image](https://github.com/user-attachments/assets/23b16984-2806-43c3-9667-f04d7e70fc07)
 
-
-### 4. Setup Passwords & Auth
-
-Create a password for `hacluster` user and sync between nodes:
-
-```bash
-passwd hacluster
-pcs host auth vitalpbx-master.local vitalpbx-slave.local
+### 4.- Format partition
+Now, we will proceed to format the new partition in **Node 1 and Node 2**.
 ```
+mkdir /vpbx_data
+mke2fs -j /dev/sda3
+dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
+```
+
+### 5.- Configuring DRBD
+Load the module and enable the service in **Node 1 and Node 2**.
+```
+modprobe drbd
+systemctl enable drbd.service
+```
+
+Create a new global_common.conf file in **Node 1 and Node 2**.
+```
+mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
+nano /etc/drbd.d/global_common.conf
+```
+
+```
+global {
+  usage-count no;
+}
+  common {
+net {
+  protocol C;
+  }
+}
+```
+
+Next, we will need to create a new configuration file /etc/drbd.d/drbd0.res for the new resource named drbd0 in **Node 1 and Node 2**.
+```
+nano /etc/drbd.d/drbd0.res
+```
+```
+resource drbd0 {
+startup {
+        wfc-timeout  5;
+	outdated-wfc-timeout 3;
+        degr-wfc-timeout 3;
+	outdated-wfc-timeout 2;
+}
+syncer {
+	rate 10M;
+ 	verify-alg md5;
+}
+net {
+    after-sb-0pri discard-older-primary;
+    after-sb-1pri discard-secondary;
+    after-sb-2pri call-pri-lost-after-sb;
+}
+handlers {
+    pri-lost-after-sb "/sbin/reboot";
+}
+on vitalpbx-master.local {
+	device /dev/drbd0;
+   	disk /dev/sda3;
+   	address 192.168.10.31:7789;
+	meta-disk internal;
+}
+on vitalpbx-slave.local {
+	device /dev/drbd0;
+   	disk /dev/sda3;
+   	address 192.168.10.32:7789;
+	meta-disk internal;
+   	}
+}
+```
+Note:
+Although the access interfaces can be used, which in this case is ETH0. It is recommended to use an interface (ETH1) for synchronization, this interface must be directly connected between both servers.<br>
+
+Initialize the meta data storage on each nodes by executing the following command in **Node 1 and Node 2**.
+```
+drbdadm create-md drbd0
+```
+<pre>
+ Writing meta data...
+New drbd meta data block successfully created.
+</pre>
+
+Let’s define the DRBD Primary node as first node “vitalpbx-master” (**Node 1**).
+```
+drbdadm up drbd0
+drbdadm primary drbd0 --force
+```
+
+On the Secondary node “vitalpbx-slave” run the following command to start the drbd0 (**Node 2**).
+```
+drbdadm up drbd0
+```
+You can check the current status of the synchronization while it’s being performed. The cat /proc/drbd command displays the creation and synchronization progress of the resource. <br>
+
+
+#### Formatting and Test DRBD Disk
+In order to test the DRBD functionality we need to Create a file system, mount the volume and write some data on primary node “vitalpbx-master” and finally switch the primary node to “vitalpbx-slave”
+
+Run the following command on the primary node to create an xfs filesystem on /dev/drbd0 and mount it to the mnt directory, using the following commands (**Node 1**).
+```
+mkfs.xfs /dev/drbd0
+mount /dev/drbd0 /vpbx_data
+```
+
+Create some data using the following command: (**Node 1**).
+```
+touch /vpbx_data/file{1..5}
+ls -l /vpbx_data
+```
+<pre>
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file1
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file2
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file3
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file4
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file5
+</pre>
+
+Let’s now switch primary mode “vitalpbx-server” to second node “vitalpbx-slave” to check the data replication works or not.<br>
+First, we have to unmount the volume drbd0 on the first drbd cluster node “vitalpbx-master” and change the primary node to secondary node on the first drbd cluster node “vitalpbx-master” (**Node 1**).<br>
+```
+umount /vpbx_data
+drbdadm secondary drbd0
+```
+Change the secondary node to primary node on the second drbd cluster node “vitalpbx-slave” (**Node 2**).
+```
+drbdadm up drbd0
+drbdadm primary drbd0 --force
+```
+
+Mount the volume and check the data available or not (**Node 2**).
+```
+mount /dev/drbd0 /vpbx_data
+ls -l  /vpbx_data
+```
+<pre>
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file1
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file2
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file3
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file4
+-rw-r--r-- 1 root root 0 Nov 17 11:28 file5
+</pre>
+
+Normalize Server-Slave (**Node 2**).
+```
+umount /vpbx_data
+drbdadm secondary drbd0
+```
+
+Normalize Server-Master (**Node 1**).
+```
+drbdadm primary drbd0
+mount /dev/drbd0 /vpbx_data
+```
+
+### 6. Configure Cluster
+
+Create the password of the hacluster user in **Node 1 and Node 2**.
+
+```
+echo hacluster:Mypassword | chpasswd
+```
+
+Start PCS in **Node 1 and Node 2**.
+```
+systemctl start pcsd 
+```
+
+Configure the start of services in **Node 1 and Node 2**.
+```
+systemctl enable pcsd.service 
+systemctl enable corosync.service 
+systemctl enable pacemaker.service
+```
+
+Server Authenticate in Master
+On vitalpbx-master, use pcs cluster auth to authenticate as the hacluster user (**Node 1**).
+```
+pcs cluster destroy
+pcs host auth vitalpbx-master.local vitalpbx-slave.local -u hacluster -p Mypassword
+```
+<pre>
+ vitalpbx-master.local: Authorized
+vitalpbx-slave.local: Authorized
+</pre>
+
+Next, use pcs cluster setup on the vitalpbx-master to generate and synchronize the corosync configuration  (**Node 1**).
+```
+pcs cluster setup cluster_vitalpbx vitalpbx-master.local vitalpbx-slave.local --force
+```
+
+Starting Cluster in Master (**Node 1**).
+```
+pcs cluster start --all
+pcs cluster enable --all
+pcs property set stonith-enabled=false
+pcs property set no-quorum-policy=ignore
+```
+
+Prevent Resources from Moving after Recovery<br>
+In most circumstances, it is highly desirable to prevent healthy resources from being moved around the cluster. Moving resources almost always requires a period of downtime. For complex services such as databases, this period can be quite long (**Node 1**).
+```
+pcs resource defaults update resource-stickiness=INFINITY
+```
+
+
+
+
+
+
+Create resource for the use of Floating IP (**Node 1**).
+```
+pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.10.30 cidr_netmask=24 op monitor interval=30s on-fail=restart
+pcs cluster cib drbd_cfg
+pcs cluster cib-push drbd_cfg --config
+```
+
+Create resource for the use of DRBD (**Node 1**).
+```
+pcs cluster cib drbd_cfg
+pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op monitor interval=60s
+pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
+pcs cluster cib fs_cfg
+pcs cluster cib-push drbd_cfg --config
+```
+
+Create FILESYSTEM resource for the automated mount point (**Node 1**).
+```
+pcs cluster cib fs_cfg
+pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx_data" fstype="xfs" 
+pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master 
+pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
+pcs -f fs_cfg constraint colocation add DrbdFS with ClusterIP INFINITY
+pcs -f fs_cfg constraint order DrbdData-clone then DrbdFS
+pcs cluster cib-push fs_cfg --config
+```
+
+Stop and disable all services in both servers (**Node 1 and Node 2**).
+```
+systemctl stop mariadb
+systemctl disable mariadb
+systemctl stop fail2ban
+systemctl disable fail2ban
+systemctl stop asterisk
+systemctl disable asterisk
+systemctl stop vpbx-monitor
+systemctl disable vpbx-monitor
+```
+
+Create resource for the use of MariaDB in Master (**Node 1**).
+```
+mkdir /vpbx_data/mysql 
+mkdir /vpbx_data/mysql/data 
+cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
+chown -R mysql:mysql /vpbx_data/mysql
+sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+pcs resource create mysql service:mariadb op monitor interval=30s
+pcs cluster cib fs_cfg
+pcs cluster cib-push fs_cfg --config
+pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
+pcs -f fs_cfg constraint order DrbdFS then mysql
+pcs cluster cib-push fs_cfg --config
+```
+
+Change 50-server.cnf in Slave (**Node 2**).
+```
+sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+```
+
+Path Asterisk service in both servers (**Node 1 nad Node 2**).
+```
+sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
+```
+
+Create resource for Asterisk (**Node 1**).
+```
+pcs resource create asterisk service:asterisk op monitor interval=30s
+pcs cluster cib fs_cfg
+pcs cluster cib-push fs_cfg --config
+pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
+pcs -f fs_cfg constraint order mysql then asterisk
+pcs cluster cib-push fs_cfg --config
+pcs resource update asterisk op stop timeout=120s
+pcs resource update asterisk op start timeout=120s
+pcs resource update asterisk op restart timeout=120s
+```
+
+Copy folders and files the DRBD partition on the Master (**Node 1**).
+```
+tar -zcvf var-asterisk.tgz /var/log/asterisk 
+tar -zcvf var-lib-asterisk.tgz /var/lib/asterisk
+tar -zcvf var-lib-vitalpbx.tgz /var/lib/vitalpbx
+tar -zcvf etc-vitalpbx.tgz /etc/vitalpbx
+tar -zcvf usr-lib-asterisk.tgz /usr/lib/asterisk
+tar -zcvf var-spool-asterisk.tgz /var/spool/asterisk
+tar -zcvf etc-asterisk.tgz /etc/asterisk
+ ```
+```
+tar xvfz var-asterisk.tgz -C /vpbx_data
+tar xvfz var-lib-asterisk.tgz -C /vpbx_data
+tar xvfz var-lib-vitalpbx.tgz -C /vpbx_data
+tar xvfz etc-vitalpbx.tgz -C /vpbx_data
+tar xvfz usr-lib-asterisk.tgz -C /vpbx_data
+tar xvfz var-spool-asterisk.tgz -C /vpbx_data
+tar xvfz etc-asterisk.tgz -C /vpbx_data
+chmod -R 775 /vpbx_data/var/log/asterisk
+```
+```
+rm -rf /var/log/asterisk
+rm -rf /var/lib/asterisk
+rm -rf /var/lib/vitalpbx
+rm -rf /etc/vitalpbx
+rm -rf /usr/lib/asterisk
+rm -rf /var/spool/asterisk
+rm -rf /etc/asterisk 
+```
+```
+ln -s /vpbx_data/var/log/asterisk /var/log/asterisk 
+ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk
+ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
+ln -s /vpbx_data/etc/vitalpbx /etc/vitalpbx
+ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
+ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
+ln -s /vpbx_data/etc/asterisk /etc/asterisk
+```
+```
+rm -rf var-asterisk.tgz
+rm -rf var-lib-asterisk.tgz
+rm -rf var-lib-vitalpbx.tgz
+rm -rf etc-vitalpbx.tgz
+rm -rf usr-lib-asterisk.tgz
+rm -rf var-spool-asterisk.tgz
+rm -rf etc-asterisk.tgz
+```
+
+Configure symbolic links on the Slave (**Node 2**).
+```
+rm -rf /var/log/asterisk 
+rm -rf /var/lib/asterisk
+rm -rf /var/lib/vitalpbx
+rm -rf /etc/vitalpbx 
+rm -rf /usr/lib/asterisk
+rm -rf /var/spool/asterisk
+rm -rf /etc/asterisk
+```
+```
+ln -s /vpbx_data/var/log/asterisk /var/log/asterisk 
+ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk
+ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
+ln -s /vpbx_data/etc/vitalpbx /etc/vitalpbx
+ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
+ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
+ln -s /vpbx_data/etc/asterisk /etc/asterisk
+```
+
+Create VitalPBX Service (**Node 1**).
+```
+pcs resource create vpbx-monitor service:vpbx-monitor op monitor interval=30s
+pcs cluster cib fs_cfg 
+pcs cluster cib-push fs_cfg --config
+pcs -f fs_cfg constraint colocation add vpbx-monitor with ClusterIP INFINITY 
+pcs -f fs_cfg constraint order asterisk then vpbx-monitor 
+pcs cluster cib-push fs_cfg --config
+```
+
+Create fail2ban Service (**Node 1**).
+```
+pcs resource create fail2ban service:fail2ban op monitor interval=30s
+pcs cluster cib fs_cfg 
+pcs cluster cib-push fs_cfg --config
+pcs -f fs_cfg constraint colocation add fail2ban with ClusterIP INFINITY 
+pcs -f fs_cfg constraint order asterisk then fail2ban 
+pcs cluster cib-push fs_cfg --config
+```
+Note:
+All configuration is stored in the file: /var/lib/pacemaker/cib/cib.xml<br>
+
+Show the Cluster Status (**Node 1**).
+```
+pcs status resources
+```
+<pre>
+  * ClusterIP  (ocf::heartbeat:IPaddr2):        Started vitalpbx-master.local
+  * Clone Set: DrbdData-clone [DrbdData] (promotable):
+    * Masters: [ vitalpbx-master.local ]
+    * Slaves: [ vitalpbx-slave.local ]
+  * DrbdFS      (ocf::heartbeat:Filesystem):     Started vitalpbx-master.local
+  * mysql       (ocf::heartbeat:mysql):  Started vitalpbx-master.local
+  * asterisk    (service:asterisk):      Started vitalpbx-master.local
+  * vpbx-monitor        (service:vpbx-monitor):  Started vitalpbx-master.local
+  * fail2ban    (service:fail2ban):      Started vitalpbx-master.local
+</pre>
+
+Note:<br>
+Before doing any high availability testing, make sure that the data has finished syncing. To do this, use the cat /proc/drbd command.
+```
+cat /proc/drbd
+```
+<pre>
+version: 8.4.11 (api:1/proto:86-101)
+srcversion: 96ED19D4C144624490A9AB1 
+ 0: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate C r-----
+    ns:12909588 nr:2060 dw:112959664 dr:12655881 al:453 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0
+</pre>
+
+
+
+
+
+
+
+
+
+
 
 ---
 
