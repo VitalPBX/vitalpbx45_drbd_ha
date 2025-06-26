@@ -169,7 +169,7 @@ nano /etc/hosts
 fdisk /dev/sda
 ```
 
-```
+<pre>
 Command (m for help): <strong>n</strong>
 Partition type:
   p   primary (3 primary, 0 extended, 1 free)
@@ -185,7 +185,7 @@ Partition number (1-4, default 4): **3**
 Hex code (type L to list all codes): **8e**
 Changed type of partition 'Linux' to 'Linux LVM'
 Command (m for help): **w**<br>
-```
+</pre>
 
 ## Install VitalPBX 4.5
 Install VitalPBX 4.5 on **Node 1 and Node 2**. Let's connect via SSH to each of them and run the following commands.
