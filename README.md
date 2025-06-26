@@ -728,131 +728,170 @@ srcversion: 96ED19D4C144624490A9AB1
 </pre>
 
 
+#### Bind Address
+Managing the bind address also is critical if you use multple IP addresses on the same NIC [as, for example, when using a floating IP address in an HA cluster]. In that circumstance, asterisk has a rather nasty habit of listening for SIP/IAX on the virtual IP address but replying on the base address of the NIC causing phones/trunks to fail to register.<br>
+In the Master server go to SETTINGS/PJSIP Settings and configure the Floating IP that we are going to use in "Bind" and "TLS Bind". Also do it in SETTINGS/SIP Settings Tab NETWORK fields "TCP Bind Address" and "TLS Bind Address".<br>
+![image](https://github.com/user-attachments/assets/fd80e887-7bf3-4129-abb8-f9319ca30103)<br>
 
+#### Create “bascul” command in both servers
+The bascul command permanently moves services from one server to another. If you want to return the services to the main server you must execute the command again. (**Node 1 and Node 2**).<br>
+Download file<br>
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx45_drbd_ha/main/bascul
 
-
-
-
-
-
-
-
----
-
-### 4. Corosync Configuration
-
-Generate config using `corosync.conf.example.udpu`.
-
-Use `uidgid` model and unicast UDP between nodes.
-
-Ensure `/etc/corosync/corosync.conf` is the same on both nodes.
-
----
-
-### 5. Cluster Initialization
-
-```bash
-pcs cluster setup --name cluster_vitalpbx vitalpbx-master.local vitalpbx-slave.local
-pcs cluster enable --all
-pcs cluster start --all
-pcs property set stonith-enabled=false
-pcs property set no-quorum-policy=ignore
+Or create file<br>
+```
+nano /usr/local/bin/bascul
 ```
 
----
+Paste
+```
+#!/bin/bash
+# VitalPBX LLC - HA Role Switch Script
+# Date: 2025-06-25
+# License: Proprietary
 
-### 6. Setup DRBD
+set -e
 
-#### 6.1 Configure DRBD Resource
-
-Example: `/etc/drbd.d/vpbx.res`
-
-```bash
-resource DrbdData {
-    on vitalpbx-master.local {
-        device    /dev/drbd0;
-        disk      /dev/sdb1;
-        address   192.168.100.1:7789;
-        meta-disk internal;
-    }
-    on vitalpbx-slave.local {
-        device    /dev/drbd0;
-        disk      /dev/sdb1;
-        address   192.168.100.2:7789;
-        meta-disk internal;
-    }
+progress_bar() {
+    local duration=$1
+    for ((elapsed = 1; elapsed <= duration; elapsed++)); do
+        printf "\r["
+        for ((i = 0; i < elapsed; i++)); do printf "#"; done
+        for ((i = elapsed; i < duration; i++)); do printf " "; done
+        printf "] %d%%" $((elapsed * 100 / duration))
+        sleep 1
+    done
+    printf "\n"
 }
+
+# Extract promoted and stopped node from pcs status
+host_master=$(pcs status | grep "Promoted:" | awk -F'[][]' '{print $2}' | xargs)
+host_standby=$(pcs status | grep "Stopped:" | awk -F'[][]' '{print $2}' | xargs)
+
+# Validate
+if [[ -z "$host_master" || -z "$host_standby" ]]; then
+    echo -e "\e[41m Error: Could not detect cluster nodes from DRBD status. \e[0m"
+    exit 1
+fi
+
+# Confirm switch
+echo -e "************************************************************"
+echo -e "*     Change the roles of servers in high availability     *"
+echo -e "* \e[41m WARNING: All current calls will be dropped!         \e[0m *"
+echo -e "************************************************************"
+read -p "Are you sure to switch from $host_master to $host_standby? (yes/no): " confirm
+
+if [[ "$confirm" != "yes" ]]; then
+    echo "Aborted by user. No changes applied."
+    exit 0
+fi
+
+# Ensure both nodes are not in standby
+pcs node unstandby "$host_master" || true
+pcs node unstandby "$host_standby" || true
+
+# Clear previous constraints if exist
+pcs resource clear DrbdData-clone || true
+pcs resource clear ClusterIP || true
+
+# Put current master into standby
+echo "Putting $host_master into standby..."
+pcs node standby "$host_master"
+
+# Wait for switchover
+echo "Waiting for cluster to promote $host_standby..."
+progress_bar 10
+
+# Display final status
+echo -e "\n\033[1;32mSwitch complete. Current cluster status:\033[0m"
+role 
+
+exit 0
 ```
 
-Create and bring up DRBD:
-
-```bash
-drbdadm create-md DrbdData
-drbdadm up DrbdData
+Add permissions and move to folder /usr/local/bin
+```
+chmod +x /usr/local/bin/bascul
 ```
 
-Initial sync (only on master):
+#### Create “role” command in both servers
+Download file<br>
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx45_drbd_ha/main/role
 
-```bash
-drbdadm primary --force DrbdData
-mkfs.ext4 /dev/drbd0
+Or create file
+```
+nano /usr/local/bin/role
 ```
 
----
-
-### 7. Pacemaker Resources
-
-```bash
-pcs resource create DrbdData ocf:linbit:drbd drbd_resource=DrbdData op monitor interval=20s role=Master op monitor interval=30s role=Slave
-pcs resource master DrbdData-clone DrbdData master-max=1 master-node-max=1 clone-max=2 clone-node-max=1 notify=true
+Paste
+```
+#!/bin/bash
+# This code is the property of VitalPBX LLC Company
+# License: Proprietary
+# Date: 8-Agu-2023
+# Show the Role of Server.
+#Bash Colour Codes
+green="\033[00;32m"
+yellow="\033[00;33m"
+txtrst="\033[00;0m"
+linux_ver=`cat /etc/os-release | grep -e PRETTY_NAME | awk -F '=' '{print $2}' | xargs`
+vpbx_version=`aptitude versions vitalpbx | awk '{ print $2 }'`
+server_master=`pcs status resources | awk 'NR==1 {print $5}'`
+host=`hostname`
+if [[ "${server_master}" = "${host}" ]]; then
+        server_mode="Master"
+else
+        server_mode="Standby"
+fi
+logo='
+ _    _ _           _ ______ ______ _    _
+| |  | (_)_        | (_____ (____  \ \  / /
+| |  | |_| |_  ____| |_____) )___)  ) \/ /
+ \ \/ /| |  _)/ _  | |  ____/  __  ( )  (
+  \  / | | |_( ( | | | |    | |__)  ) /\ \\
+   \/  |_|\___)_||_|_|_|    |______/_/  \_\\
+'
+echo -e "
+${green}
+${logo}
+${txtrst}
+ Role           : $server_mode
+ Version        : ${vpbx_version//[[:space:]]}
+ Asterisk       : `asterisk -rx "core show version" 2>/dev/null| grep -ohe 'Asterisk [0-9.]*'`
+ Linux Version  : ${linux_ver}
+ Welcome to     : `hostname`
+ Uptime         : `uptime | grep -ohe 'up .*' | sed 's/up //g' | awk -F "," '{print $1}'`
+ Load           : `uptime | grep -ohe 'load average[s:][: ].*' | awk '{ print "Last Minute: " $3" Last 5 Minutes: "$4" Last 15 Minutes "$5 }'`
+ Users          : `uptime | grep -ohe '[0-9.*] user[s,]'`
+ IP Address     : ${green}`ip addr | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | xargs `${txtrst}
+ Clock          :`timedatectl | sed -n '/Local time/ s/^[ \t]*Local time:\(.*$\)/\1/p'`
+ NTP Sync.      :`timedatectl |awk -F: '/NTP service/ {print $2}'`
+"
+echo -e ""
+echo -e "************************************************************"
+if [[ "${server_mode}" = "Master" ]]; then
+echo -e "*                Server Status: ${green}$server_mode${txtrst}                     *"
+else
+echo -e "*                Server Status: ${yellow}$server_mode${txtrst}                     *"
+fi
+echo -e "************************************************************"
+pcs status resources
+echo -e "************************************************************"
+echo -e ""
+echo -e "Servers Status"
+pcs status pcsd
 ```
 
----
-
-### 8. Mount Filesystem
-
-```bash
-pcs resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx" fstype="ext4"
+Add permissions and copy to folder /etc/profile.d/
+```
+cp -rf role /etc/profile.d/vitalwelcome.sh
+chmod 755 /etc/profile.d/vitalwelcome.sh
 ```
 
----
-
-### 9. Setup Floating IP
-
-```bash
-pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.1.250 cidr_netmask=24 nic=eth0 op monitor interval=30s
+Now add permissions and move to folder /usr/local/bin
 ```
-
----
-
-### 10. Add Application Services
-
-```bash
-pcs resource create mysql systemd:mariadb
-pcs resource create asterisk systemd:asterisk
-pcs resource create vpbx-monitor systemd:vpbx-monitor
-pcs resource create fail2ban systemd:fail2ban
+chmod +x /usr/local/bin/role
 ```
-
----
-
-### 11. Resource Order & Colocation
-
-```bash
-pcs constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master
-pcs constraint order promote DrbdData-clone then start DrbdFS
-pcs constraint colocation add mysql with DrbdFS
-pcs constraint order start DrbdFS then mysql
-pcs constraint colocation add asterisk with mysql
-pcs constraint order start mysql then asterisk
-pcs constraint colocation add vpbx-monitor with asterisk
-pcs constraint colocation add fail2ban with asterisk
-pcs constraint colocation add ClusterIP with fail2ban
-pcs constraint order start asterisk then vpbx-monitor
-pcs constraint order start vpbx-monitor then fail2ban
-pcs constraint order start fail2ban then ClusterIP
-```
-
 ---
 
 ## 🔁 Manual Failover Example
