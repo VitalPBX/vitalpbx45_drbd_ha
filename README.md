@@ -162,6 +162,43 @@ nano /etc/hosts
 ```
 ---
 
+
+### Create authorization key for the Access between the two servers without credentials.
+
+Create key in **Node 1**.
+```
+ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+ssh-copy-id root@192.168.10.32
+```
+<pre>
+Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
+root@192.168.10.62's password: <strong>(remote server root’s password)</strong>
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@192.168.10.32'"
+and check to make sure that only the key(s) you wanted were added. 
+
+root@vitalpbx-master:~#
+</pre>
+
+Create key in **Node 2**.
+```
+ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+ssh-copy-id root@192.168.10.31
+```
+<pre>
+Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
+root@192.168.10.61's password: <strong>(remote server root’s password)</strong>
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@192.168.10.31'"
+and check to make sure that only the key(s) you wanted were added. 
+
+root@vitalpbx-slave:~#
+</pre>
+
 ### Create the partition on both servers
 
 **Node 1 and Node 2**
@@ -186,6 +223,11 @@ Hex code (type L to list all codes): <strong>8e</strong>
 Changed type of partition 'Linux' to 'Linux LVM'
 Command (m for help): <strong>w</strong>
 </pre>
+
+Now restart both servers, **Node 1 and Node 2**
+```
+reboot
+```
 
 ## Install VitalPBX 4.5
 Install VitalPBX 4.5 on **Node 1 and Node 2**. Let's connect via SSH to each of them and run the following commands.
@@ -215,11 +257,10 @@ Install dependencies on **Node 1 and Node 2**.
 ```bash
 apt update && apt install -y drbd-utils pacemaker pcs corosync chrony rsync xfsprogs
 ```
-Enable pcsd service:
-```bash
-systemctl enable --now pcsd
-```
 ---
+
+### Using Script
+We have two ways to configure the Cluster. Using the following Script or following this manual step by step. If you decide to use the following Script, the next step you should follow in this manual is 5 if you consider it necessary. Otherwise continue with step 4.6.
 
 ### 3. Setup Passwords & Auth
 
