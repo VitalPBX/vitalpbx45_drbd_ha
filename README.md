@@ -64,7 +64,7 @@ And continue with the installation.<br>
 As a security measure, the root user is not allowed to remote access the server. If you wish to unblock it, remember to set a complex password, and perform the following steps.
 
 Enter the Command Line Console with the root user directly on your server with the password you set up earlier.
-Edit the following file using nano, /etc/ssh/sshd_config (Master-Slave).
+Edit the following file using nano, /etc/ssh/sshd_config in **Node 1 and Node 2**.
 ```
 nano /etc/ssh/sshd_config
 ```
@@ -86,7 +86,7 @@ systemctl restart sshd
 ### 2.- Changing your IP Address to a static address.
 By default, our system’s IP address in Debian is obtained through DHCP, however, you can modify it and assign it a static IP address using the following steps:
 
-Edit the following file with nano, /etc/network/interfaces (Master-Slave).
+Edit the following file with nano, /etc/network/interfaces **Node 1**.
 ```
 nano /etc/network/interfaces
 ```
@@ -106,7 +106,20 @@ address 192.168.10.31
 netmask 255.255.254.0
 gateway 192.168.10.1
 ```
-With the following. Sever Slave.
+Lastly, reboot both servers and you can now log in via ssh.
+
+Edit the following file with nano, /etc/network/interfaces **Node 2**.
+```
+nano /etc/network/interfaces
+```
+Change
+```
+#The primary network interface
+allow-hotplug eth0
+iface eth0 inet dchp
+```
+
+With the following. Sever Master.
 ```
 #The primary network interface
 allow-hotplug eth0
@@ -119,12 +132,26 @@ Lastly, reboot both servers and you can now log in via ssh.
 
 ### 3.- Set Hostnames
 
+**Node 1**
 ```bash
-hostnamectl set-hostname vitalpbx-master.local  # On Node 1
-hostnamectl set-hostname vitalpbx-slave.local   # On Node 2
+hostnamectl set-hostname vitalpbx-master.local
+```
+**Node 2**
+```bash
+hostnamectl set-hostname vitalpbx-slave.local
 ```
 
-Edit `/etc/hosts` on both nodes:
+Edit `/etc/hosts` on **Node 1**:
+
+```
+nano /etc/hosts
+```
+```
+192.168.10.31 vitalpbx-master.local
+192.168.10.32 vitalpbx-slave.local
+```
+
+Edit `/etc/hosts` on **Node 2**:
 
 ```
 nano /etc/hosts
