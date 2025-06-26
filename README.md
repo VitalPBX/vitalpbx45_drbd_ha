@@ -174,17 +174,17 @@ Command (m for help): <strong>n</strong>
 Partition type:
   p   primary (3 primary, 0 extended, 1 free)
   e   extended
-Select (default e): **p**
+Select (default e): <strong>p</strong>
 Selected partition 3 (take note of the assigned partition number as we will need it later)
-First sector (35155968-266338303, default 35155968): **[Enter]**
-Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): **[Enter]**
+First sector (35155968-266338303, default 35155968): <strong>[Enter]</strong>
+Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): <strong>[Enter]</strong>
 Using default value 266338303
 Partition 4 of type Linux and of size 110.2 GiB is set
-Command (m for help): **t**
-Partition number (1-4, default 4): **3**
-Hex code (type L to list all codes): **8e**
+Command (m for help): <strong>t</strong>
+Partition number (1-4, default 4): <strong>3</strong>
+Hex code (type L to list all codes): <strong>8e</strong>
 Changed type of partition 'Linux' to 'Linux LVM'
-Command (m for help): **w**<br>
+Command (m for help): <strong>w</strong>
 </pre>
 
 ## Install VitalPBX 4.5
