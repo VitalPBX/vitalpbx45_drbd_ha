@@ -293,6 +293,34 @@ Note:<br>
 Before doing any high availability testing, make sure that the data has finished syncing. To do this, use the cat /proc/drbd command.<br>
 CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
+### 3.- Firewall
+# Configure the Firewall (Both Servers - Node 1 and Node 2)
+
+## Required Ports
+
+| Port           | Description |
+|----------------|-------------|
+| **TCP 2224**   | Required on all nodes (needed by the `pcsd` Web UI and for node-to-node communication).<br>It is **crucial** to open port 2224 in such a way that `pcs` from any node can talk to all nodes in the cluster, including itself.<br><br>When using the **Booth cluster ticket manager** or a **quorum device**, you must open port 2224 on **all related hosts**, such as Booth arbiters or the quorum device host. |
+| **TCP 3121**   | Required on all nodes if the cluster has any **Pacemaker Remote** nodes.<br><br>`crmd` (on full cluster nodes) will contact `pacemaker_remoted` (on remote nodes) at port 3121.<br><br>If a separate interface is used for cluster communication, the port only needs to be open on that interface.<br><br>At a minimum, open the port on **Pacemaker Remote nodes** to **full cluster nodes**. However, it can be useful to open the port to **all nodes** to allow flexibility in node roles (e.g., full ↔ remote, or containers using host network).<br><br>It is **not necessary** to open this port to non-cluster hosts. |
+| **TCP 5403**   | Required on the **quorum device host** when using a quorum device with `corosync-qnetd`.<br>The default port (5403) can be changed with the `-p` option of the `corosync-qnetd` command. |
+| **UDP 5404**   | Required on **corosync nodes** if `corosync` is configured for **multicast UDP**. |
+| **UDP 5405**   | Required on **all corosync nodes** (used by `corosync`). |
+| **TCP 21064**  | Required on **all nodes** if the cluster contains resources using **DLM** (e.g., `clvm`, `GFS2`). |
+| **TCP & UDP 9929** | Required on **all cluster nodes** and **Booth arbitrator nodes** to communicate when the **Booth ticket manager** is used for multi-site clustering. |
+| **TCP 7789**   | Required by **DRBD** to synchronize data between nodes. |
+
+---
+
+## Firewall Service Setup
+
+On **both servers**, perform the following steps:
+
+1. Go to:  
+   `ADMIN → Firewall → Services → Add Service`
+2. Add a new service including all the required ports listed above.
+3. Create a **Firewall Rule** allowing this service.
+
+
 ### 3. Setup Passwords & Auth
 
 Create a password for `hacluster` user and sync between nodes:
