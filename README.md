@@ -135,7 +135,7 @@ nano /etc/hosts
 ```
 ---
 
-## Install VitalPBX 4.5
+## HA Install VitalPBX 4.5
 Install VitalPBX 4.5 on both servers. Let's connect via SSH to each of them and run the following commands.
 ```
 apt install sudo
