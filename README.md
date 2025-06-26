@@ -169,7 +169,6 @@ nano /etc/hosts
 fdisk /dev/sda
 ```
 
-```
 Command (m for help): **n**
 Partition type:
   p   primary (3 primary, 0 extended, 1 free)
@@ -184,9 +183,7 @@ Command (m for help): **t**
 Partition number (1-4, default 4): **3**
 Hex code (type L to list all codes): **8e**
 Changed type of partition 'Linux' to 'Linux LVM'
-Command (m for help): **w**
-
-```
+Command (m for help): **w**<br>
 
 
 ## Install VitalPBX 4.5
