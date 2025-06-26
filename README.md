@@ -259,8 +259,39 @@ apt update && apt install -y drbd-utils pacemaker pcs corosync chrony rsync xfsp
 ```
 ---
 
-### Using Script
-We have two ways to configure the Cluster. Using the following Script or following this manual step by step. If you decide to use the following Script, the next step you should follow in this manual is 5 if you consider it necessary. Otherwise continue with step 4.6.
+### 2.- Using Script
+We have two ways to configure the Cluster. Using the following Script or following this manual step by step. If you decide to use the following Script, the next step you should follow in this manual is 3 if you consider it necessary. Otherwise continue with step 4.<br>
+
+Now copy and run the following script in **Node 1**.
+```
+mkdir /usr/share/vitalpbx/ha
+cd /usr/share/vitalpbx/ha
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx45_drbd_ha/main/vpbxha.sh
+chmod +x vpbxha.sh
+./vpbxha.sh
+```
+
+Now we enter all the information requested.
+<pre>
+************************************************************
+*  Welcome to the VitalPBX high availability installation  *
+*                All options are mandatory                 *
+************************************************************
+IP Server1............... > <strong>192.168.10.31</strong>
+IP Server2............... > <strong>192.168.10.32</strong>
+Floating IP.............. > <strong>192.168.10.30</strong>
+Floating IP Mask (SIDR).. > <strong>24</strong>
+Disk (sdax).............. > <strong>sda3</strong>
+hacluster password....... > <strong>MyPassword</strong>
+************************************************************
+*                   Check Information                      *
+*        Make sure you have internet on both servers       *
+************************************************************
+Are you sure to continue with this settings? (yes,no) > <strong>yes</strong>
+</pre>
+Note:<br>
+Before doing any high availability testing, make sure that the data has finished syncing. To do this, use the cat /proc/drbd command.<br>
+CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
 ### 3. Setup Passwords & Auth
 
