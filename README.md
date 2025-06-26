@@ -294,9 +294,9 @@ Before doing any high availability testing, make sure that the data has finished
 CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
 ### 3.- Firewall
-# Configure the Firewall (Both Servers - Node 1 and Node 2)
+Configure the Firewall (Both Servers - **Node 1 and Node 2**)
 
-## Required Ports
+#### Required Ports
 
 | Port           | Description |
 |----------------|-------------|
@@ -311,17 +311,20 @@ CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
 ---
 
-## Firewall Service Setup
+#### Firewall Service Setup
 
 On **both servers**, perform the following steps:
 
 1. Go to:  
    `ADMIN → Firewall → Services → Add Service`
 2. Add a new service including all the required ports listed above.
+  ![image](https://github.com/user-attachments/assets/f5a0dc29-3637-4acb-9618-200fbb20f399)
+
 3. Create a **Firewall Rule** allowing this service.
+![image](https://github.com/user-attachments/assets/23b16984-2806-43c3-9667-f04d7e70fc07)
 
 
-### 3. Setup Passwords & Auth
+### 4. Setup Passwords & Auth
 
 Create a password for `hacluster` user and sync between nodes:
 
