@@ -135,7 +135,7 @@ nano /etc/hosts
 ```
 ---
 
-## HA Install VitalPBX 4.5
+## Install VitalPBX 4.5
 Install VitalPBX 4.5 on both servers. Let's connect via SSH to each of them and run the following commands.
 ```
 apt install sudo
@@ -156,7 +156,7 @@ Slave<br>
 
 ---
 
-## 🏗️ Installation Steps
+## 🏗️ HA Installation Steps
 
 ### 1.- Install Required Packages
 Install dependencies on both servers (Master-Slave).
