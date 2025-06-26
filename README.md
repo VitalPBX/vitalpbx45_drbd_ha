@@ -735,8 +735,10 @@ In the Master server go to SETTINGS/PJSIP Settings and configure the Floating IP
 
 #### Create “bascul” command in both servers
 The bascul command permanently moves services from one server to another. If you want to return the services to the main server you must execute the command again. (**Node 1 and Node 2**).<br>
-Download file<br>
+Download file
+```
 wget https://raw.githubusercontent.com/VitalPBX/vitalpbx45_drbd_ha/main/bascul
+```
 
 Or create file<br>
 ```
@@ -816,7 +818,9 @@ chmod +x /usr/local/bin/bascul
 
 #### Create “role” command in both servers
 Download file<br>
+```
 wget https://raw.githubusercontent.com/VitalPBX/vitalpbx45_drbd_ha/main/role
+```
 
 Or create file
 ```
