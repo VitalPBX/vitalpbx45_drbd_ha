@@ -1,0 +1,62 @@
+#!/bin/bash
+# VitalPBX LLC - HA Role Switch Script
+# Date: 2025-06-25
+# License: Proprietary
+
+set -e
+
+progress_bar() {
+    local duration=$1
+    for ((elapsed = 1; elapsed <= duration; elapsed++)); do
+        printf "\r["
+        for ((i = 0; i < elapsed; i++)); do printf "#"; done
+        for ((i = elapsed; i < duration; i++)); do printf " "; done
+        printf "] %d%%" $((elapsed * 100 / duration))
+        sleep 1
+    done
+    printf "\n"
+}
+
+# Extract promoted and stopped node from pcs status
+host_master=$(pcs status | grep "Promoted:" | awk -F'[][]' '{print $2}' | xargs)
+host_standby=$(pcs status | grep "Stopped:" | awk -F'[][]' '{print $2}' | xargs)
+
+# Validate
+if [[ -z "$host_master" || -z "$host_standby" ]]; then
+    echo -e "\e[41m Error: Could not detect cluster nodes from DRBD status. \e[0m"
+    exit 1
+fi
+
+# Confirm switch
+echo -e "************************************************************"
+echo -e "*     Change the roles of servers in high availability     *"
+echo -e "* \e[41m WARNING: All current calls will be dropped!         \e[0m *"
+echo -e "************************************************************"
+read -p "Are you sure to switch from $host_master to $host_standby? (yes/no): " confirm
+
+if [[ "$confirm" != "yes" ]]; then
+    echo "Aborted by user. No changes applied."
+    exit 0
+fi
+
+# Ensure both nodes are not in standby
+pcs node unstandby "$host_master" || true
+pcs node unstandby "$host_standby" || true
+
+# Clear previous constraints if exist
+pcs resource clear DrbdData-clone || true
+pcs resource clear ClusterIP || true
+
+# Put current master into standby
+echo "Putting $host_master into standby..."
+pcs node standby "$host_master"
+
+# Wait for switchover
+echo "Waiting for cluster to promote $host_standby..."
+progress_bar 10
+
+# Display final status
+echo -e "\n\033[1;32mSwitch complete. Current cluster status:\033[0m"
+role 
+
+exit 0
