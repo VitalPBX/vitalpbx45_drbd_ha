@@ -148,11 +148,11 @@ ADMIN>Network>Network Settings
 
 First, change the Hostname in both servers, and remember to press the Save button.
  
-Master
- ![image](https://github.com/user-attachments/assets/549b0b5d-bbca-4356-b43f-60a9881e1ff3)
+Master<br>
+ ![image](https://github.com/user-attachments/assets/549b0b5d-bbca-4356-b43f-60a9881e1ff3)<br>
 
-Slave
- ![image](https://github.com/user-attachments/assets/e884d26e-adaa-4e08-bca3-0d4abde35586)
+Slave<br>
+ ![image](https://github.com/user-attachments/assets/e884d26e-adaa-4e08-bca3-0d4abde35586)<br>
 
 ---
 
