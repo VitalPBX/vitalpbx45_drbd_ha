@@ -810,6 +810,7 @@ pcs node unstandby "$host_master"
 
 # Display final status
 echo -e "\n\033[1;32mSwitch complete. Current cluster status:\033[0m"
+sleep  5
 role 
 
 exit 0
