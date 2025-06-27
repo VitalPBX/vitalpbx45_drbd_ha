@@ -801,6 +801,10 @@ pcs node standby "$host_master"
 echo "Waiting for cluster to promote $host_standby..."
 progress_bar 10
 
+# Sets the one that remains in Standby to Unpromoted to prevent it from remaining in the Stopped state
+echo "Putting $host_master into unstandby..."
+pcs node unstandby "$host_master"
+
 # Display final status
 echo -e "\n\033[1;32mSwitch complete. Current cluster status:\033[0m"
 role 
