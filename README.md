@@ -130,38 +130,7 @@ gateway 192.168.10.1
 ```
 Lastly, reboot both servers and you can now log in via ssh.
 
-### 3.- Set Hostnames
-
-**Node 1**
-```bash
-hostnamectl set-hostname vitalpbx-master.local
-```
-**Node 2**
-```bash
-hostnamectl set-hostname vitalpbx-slave.local
-```
-
-Edit `/etc/hosts` on **Node 1**:
-
-```
-nano /etc/hosts
-```
-```
-192.168.10.31 vitalpbx-master.local
-192.168.10.32 vitalpbx-slave.local
-```
-
-Edit `/etc/hosts` on **Node 2**:
-
-```
-nano /etc/hosts
-```
-```
-192.168.10.31 vitalpbx-master.local
-192.168.10.32 vitalpbx-slave.local
-```
 ---
-
 
 ### Create authorization key for the Access between the two servers without credentials.
 
@@ -291,7 +260,38 @@ Note:<br>
 Before doing any high availability testing, make sure that the data has finished syncing. To do this, use the cat /proc/drbd command.<br>
 CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
-### 3.- Firewall
+### 3.- Set Hostnames
+
+**Node 1**
+```bash
+hostnamectl set-hostname vitalpbx-master.local
+```
+**Node 2**
+```bash
+hostnamectl set-hostname vitalpbx-slave.local
+```
+
+Edit `/etc/hosts` on **Node 1**:
+
+```
+nano /etc/hosts
+```
+```
+192.168.10.31 vitalpbx-master.local
+192.168.10.32 vitalpbx-slave.local
+```
+
+Edit `/etc/hosts` on **Node 2**:
+
+```
+nano /etc/hosts
+```
+```
+192.168.10.31 vitalpbx-master.local
+192.168.10.32 vitalpbx-slave.local
+```
+
+### 4.- Firewall
 Configure the Firewall (Both Servers - **Node 1 and Node 2**)
 
 #### Required Ports
@@ -321,7 +321,7 @@ On **both servers**, perform the following steps:
 3. Create a **Firewall Rule** allowing this service.
 ![image](https://github.com/user-attachments/assets/23b16984-2806-43c3-9667-f04d7e70fc07)
 
-### 4.- Format partition
+### 5.- Format partition
 Now, we will proceed to format the new partition in **Node 1 and Node 2**.
 ```
 mkdir /vpbx_data
@@ -329,7 +329,7 @@ mke2fs -j /dev/sda3
 dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
 ```
 
-### 5.- Configuring DRBD
+### 6.- Configuring DRBD
 Load the module and enable the service in **Node 1 and Node 2**.
 ```
 modprobe drbd
@@ -475,7 +475,7 @@ drbdadm primary drbd0
 mount /dev/drbd0 /vpbx_data
 ```
 
-### 6. Configure Cluster
+### 7. Configure Cluster
 
 Create the password of the hacluster user in **Node 1 and Node 2**.
 
@@ -524,10 +524,6 @@ In most circumstances, it is highly desirable to prevent healthy resources from 
 ```
 pcs resource defaults update resource-stickiness=INFINITY
 ```
-
-
-
-
 
 
 Create resource for the use of Floating IP (**Node 1**).
