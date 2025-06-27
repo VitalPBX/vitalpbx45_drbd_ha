@@ -46,8 +46,8 @@ if [ -f $filename ]; then
 		esac
 		n=$((n+1))
 	done < $filename
-	echo -e "IP Server1............... > $ip_master"	
-	echo -e "IP Server2............... > $ip_standby"
+	echo -e "IP Node 1................ > $ip_master"	
+	echo -e "IP Node 2................ > $ip_standby"
 	echo -e "Floating IP.............. > $ip_floating "
 	echo -e "Floating IP Mask (SIDR).. > $ip_floating_mask"
  	echo -e "Disk (sdax).............. > $disk"
@@ -56,12 +56,12 @@ fi
 
 while [[ $ip_master == '' ]]
 do
-    read -p "IP Server1............... > " ip_master 
+    read -p "IP Node 1................ > " ip_master 
 done 
 
 while [[ $ip_standby == '' ]]
 do
-    read -p "IP Server2............... > " ip_standby 
+    read -p "IP Node 2................ > " ip_standby 
 done
 
 while [[ $ip_floating == '' ]]
