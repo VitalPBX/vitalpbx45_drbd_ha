@@ -184,21 +184,35 @@ fdisk /dev/sda
 ```
 
 <pre>
+Welcome to fdisk (util-linux 2.38.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+This disk is currently in use - repartitioning is probably a bad idea.
+It's recommended to umount all file systems, and swapoff all swap
+partitions on this disk.
+
+
 Command (m for help): <strong>n</strong>
-Partition type:
-  p   primary (3 primary, 0 extended, 1 free)
-  e   extended
-Select (default e): <strong>p</strong>
-Selected partition 3 (take note of the assigned partition number as we will need it later)
-First sector (35155968-266338303, default 35155968): <strong>[Enter]</strong>
-Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): <strong>[Enter]</strong>
-Using default value 266338303
-Partition 4 of type Linux and of size 110.2 GiB is set
+Partition type
+   p   primary (1 primary, 1 extended, 2 free)
+   l   logical (numbered from 5)
+Select (default p): <strong>p</strong>
+Partition number (3,4, default 3): <strong>3</strong>
+First sector (39061504-266338303, default 39061504): <strong>[Enter]</strong>
+Last sector, +/-sectors or +/-size{K,M,G,T,P} (39061504-264337407, default 264337407): <strong>[Enter]</strong>
+
+Created a new partition 3 of type 'Linux' and of size 107.4 GiB.
+
 Command (m for help): <strong>t</strong>
-Partition number (1-4, default 4): <strong>3</strong>
-Hex code (type L to list all codes): <strong>8e</strong>
-Changed type of partition 'Linux' to 'Linux LVM'
+Partition number (1-3,5, default 5): <strong>3</strong>
+Hex code or alias (type L to list all): <strong>8e</strong>
+
+Changed type of partition 'Linux' to 'Linux LVM'.
+
 Command (m for help): <strong>w</strong>
+The partition table has been altered.
+Syncing disks.
 </pre>
 
 Now restart both servers, **Node 1 and Node 2**
