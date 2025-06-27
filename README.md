@@ -206,6 +206,14 @@ Now restart both servers, **Node 1 and Node 2**
 reboot
 ```
 
+### Format partition
+Now, we will proceed to format the new partition in **Node 1 and Node 2**.
+```
+mkdir /vpbx_data
+mke2fs -j /dev/sda3
+dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
+```
+
 ## Install VitalPBX 4.5
 Install VitalPBX 4.5 on **Node 1 and Node 2**. Let's connect via SSH to each of them and run the following commands.
 ```
@@ -322,15 +330,7 @@ On **both servers**, perform the following steps:
 3. Create a **Firewall Rule** allowing this service.
 ![image](https://github.com/user-attachments/assets/23b16984-2806-43c3-9667-f04d7e70fc07)
 
-### 5.- Format partition
-Now, we will proceed to format the new partition in **Node 1 and Node 2**.
-```
-mkdir /vpbx_data
-mke2fs -j /dev/sda3
-dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
-```
-
-### 6.- Configuring DRBD
+### 5.- Configuring DRBD
 Load the module and enable the service in **Node 1 and Node 2**.
 ```
 modprobe drbd
@@ -476,7 +476,7 @@ drbdadm primary drbd0
 mount /dev/drbd0 /vpbx_data
 ```
 
-### 7. Configure Cluster
+### 6. Configure Cluster
 
 Create the password of the hacluster user in **Node 1 and Node 2**.
 
