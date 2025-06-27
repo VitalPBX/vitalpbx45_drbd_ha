@@ -765,7 +765,7 @@ progress_bar() {
 
 # Extract promoted and stopped node from pcs status
 host_master=$(pcs status | grep "Promoted:" | awk -F'[][]' '{print $2}' | xargs)
-host_standby=$(pcs status | grep "Stopped:" | awk -F'[][]' '{print $2}' | xargs)
+host_standby=$(pcs status | grep "Unpromoted:" | awk -F'[][]' '{print $2}' | xargs)
 
 # Validate
 if [[ -z "$host_master" || -z "$host_standby" ]]; then
