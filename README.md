@@ -228,17 +228,6 @@ wget https://repo.vitalpbx.com/vitalpbx/v4.5/pbx_installer.sh
 chmod +x pbx_installer.sh
 ./pbx_installer.sh
 ```
-Go to the web interface to: 
-ADMIN>Network>Network Settings
-
-First, change the Hostname in both servers, and remember to press the Save button.
- 
-**Node 1**<br>
- ![image](https://github.com/user-attachments/assets/549b0b5d-bbca-4356-b43f-60a9881e1ff3)<br>
-
-**Node 2**<br>
- ![image](https://github.com/user-attachments/assets/e884d26e-adaa-4e08-bca3-0d4abde35586)<br>
-
 ---
 
 ## 🏗️ HA Installation Steps
