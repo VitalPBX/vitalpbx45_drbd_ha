@@ -130,6 +130,16 @@ gateway 192.168.10.1
 ```
 Lastly, reboot both servers and you can now log in via ssh.
 
+### 3.- Set Hostnames
+
+**Node 1**
+```bash
+hostnamectl set-hostname vitalpbx-master.local
+```
+**Node 2**
+```bash
+hostnamectl set-hostname vitalpbx-slave.local
+```
 ---
 
 ### Create authorization key for the Access between the two servers without credentials.
@@ -260,16 +270,7 @@ Note:<br>
 Before doing any high availability testing, make sure that the data has finished syncing. To do this, use the cat /proc/drbd command.<br>
 CONGRATULATIONS, you have installed high availability in VitalPBX 4
 
-### 3.- Set Hostnames
-
-**Node 1**
-```bash
-hostnamectl set-hostname vitalpbx-master.local
-```
-**Node 2**
-```bash
-hostnamectl set-hostname vitalpbx-slave.local
-```
+### 3.- Add Hostnames to /etc/hots
 
 Edit `/etc/hosts` on **Node 1**:
 
