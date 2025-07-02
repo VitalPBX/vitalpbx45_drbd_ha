@@ -894,7 +894,7 @@ pcs status pcsd
 
 Add permissions and copy to folder /etc/profile.d/
 ```
-cp -rf role /etc/profile.d/vitalwelcome.sh
+cp -rf /usr/local/bin/role /etc/profile.d/vitalwelcome.sh
 chmod 755 /etc/profile.d/vitalwelcome.sh
 ```
 
