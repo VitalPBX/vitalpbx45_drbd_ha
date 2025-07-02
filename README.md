@@ -37,7 +37,8 @@ b.- Select:
  ![image](https://github.com/user-attachments/assets/ca06e527-a493-4848-97a9-7795c164f307)<br>
 c.- Select primary:<br>
 “#1 primary”<br>
- ![image](https://github.com/user-attachments/assets/03f0d156-92b6-4375-8ad6-b64fb2aa842c)<br>
+ ![image](https://github.com/user-attachments/assets/f806a7ba-e89c-40a9-b441-13b0207f39b2)<br>
+
 d.- Delete partition<br>
  ![image](https://github.com/user-attachments/assets/2ff33faa-3381-4e73-8bf6-53f54a82c1f9)<br>
 e.- Select pri/log<br>
