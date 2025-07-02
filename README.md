@@ -576,7 +576,7 @@ mkdir /vpbx_data/mysql
 mkdir /vpbx_data/mysql/data 
 cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
 chown -R mysql:mysql /vpbx_data/mysql
-sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+sed -i 's|^#datadir[ \t]*=[ \t]*/var/lib/mysql|datadir                 = /vpbx_data/mysql/data|' /etc/mysql/mariadb.conf.d/50-server.cnf
 pcs resource create mysql service:mariadb op monitor interval=30s
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg --config
