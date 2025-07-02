@@ -50,7 +50,7 @@ New partition size: 20GB<br>
 We need enough space for the operating system and its applications in the future; then <continue><br>
  ![image](https://github.com/user-attachments/assets/ecd41e91-bba9-4869-96ea-d1d4b06cc381)<br>
 Select Primary<br>
- ![image](https://github.com/user-attachments/assets/d33ffa80-ccdf-402d-9d19-b9991999653b)<br>
+ ![image](https://github.com/user-attachments/assets/e2bef6f0-005b-4514-93a1-6a44f4cd8a5e)<br>
 Select Beginning<br>
  ![image](https://github.com/user-attachments/assets/87c900bc-dfbf-4ce4-89f7-9cd267591ebe)<br>
 Select Done setting up the partition<br>
