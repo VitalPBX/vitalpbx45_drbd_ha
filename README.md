@@ -587,7 +587,7 @@ pcs cluster cib-push fs_cfg --config
 
 Change 50-server.cnf in Slave (**Node 2**).
 ```
-sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+sed -i 's|^#datadir[ \t]*=[ \t]*/var/lib/mysql|datadir                 = /vpbx_data/mysql/data|' /etc/mysql/mariadb.conf.d/50-server.cnf
 ```
 
 Path Asterisk service in both servers (**Node 1 nad Node 2**).
