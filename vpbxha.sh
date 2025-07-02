@@ -505,8 +505,8 @@ mkdir /vpbx_data/mysql
 mkdir /vpbx_data/mysql/data
 cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
 chown -R mysql:mysql /vpbx_data/mysql
-sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+sed -i 's|^#datadir[ \t]*=[ \t]*/var/lib/mysql|datadir                 = /vpbx_data/mysql/data|' /etc/mysql/mariadb.conf.d/50-server.cnf
+ssh root@$ip_standby "sed -i 's|^#datadir[ \t]*=[ \t]*/var/lib/mysql|datadir                 = /vpbx_data/mysql/data|' /etc/mysql/mariadb.conf.d/50-server.cnf"
 #pcs resource create mysql ocf:heartbeat:mysql binary="/usr/bin/mysqld_safe" config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/vpbx_data/mysql/data" pid="/run/mysqld/mysql.pid" socket="/run/mysqld/mysql.sock" additional_parameters="--bind-address=0.0.0.0" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s on-fail=standby
 pcs resource create mariadb service:mariadb op monitor interval=30s
 pcs cluster cib fs_cfg
