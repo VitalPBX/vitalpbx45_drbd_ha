@@ -241,7 +241,7 @@ apt update && apt install -y drbd-utils pacemaker pcs corosync chrony rsync xfsp
 ---
 
 ### 2.- Using Script
-We have two ways to configure the Cluster. Using the following Script or following this manual step by step. If you decide to use the following Script, the next step you should follow in this manual is 3 if you consider it necessary. Otherwise continue with step 4.<br>
+We have two ways to configure the Cluster. Using the following Script or following this manual step by step. If you decide to use the following Script, the next step you should follow in this manual is 3 if you consider it necessary. Otherwise continue with step 3.<br>
 
 Now copy and run the following script in **Node 1**.
 ```
