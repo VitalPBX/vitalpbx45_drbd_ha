@@ -331,10 +331,9 @@ scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.co
 cat > /etc/drbd.d/drbd0.res << EOF
 resource drbd0 {
 startup {
-        wfc-timeout  5;
-	outdated-wfc-timeout 3;
-        degr-wfc-timeout 3;
-	outdated-wfc-timeout 2;
+    	wfc-timeout 5;
+    	outdated-wfc-timeout 3;
+   	 degr-wfc-timeout 3;
 }
 syncer {
 	rate 10M;
